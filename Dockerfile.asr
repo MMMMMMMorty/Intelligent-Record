@@ -1,0 +1,11 @@
+# Extend qwen-asr-vllm with custom streaming server
+FROM qwen-asr-vllm:latest
+
+# Copy custom streaming server script
+# This script directly calls Qwen3ASRModel.LLM() with max_model_len and max_num_seqs parameters
+COPY backend/asr_streaming_server.py /app/asr_streaming_server.py
+
+# Default command uses the custom script
+# Optimized for 6GB VRAM on 8GB GPUs (RTX 5060 Ti / 4080S testing)
+ENTRYPOINT []
+CMD ["python3", "/app/asr_streaming_server.py", "--asr-model-path=/models/Qwen3-ASR-1.7B", "--host=0.0.0.0", "--port=8000", "--gpu-memory-utilization=0.75", "--max-model-len=256", "--max-num-seqs=1"]

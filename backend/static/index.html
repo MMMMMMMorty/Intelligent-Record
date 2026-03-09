@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Intelligent Document - 双模型智能语音系统</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Intelligent Document v2.5</h1>
+            <p class="subtitle">语音转写 + 内容分析，按需加载双模型</p>
+        </header>
+
+        <!-- System Status -->
+        <section class="status-section">
+            <h2>系统状态</h2>
+            <div class="status-cards">
+                <div class="status-card">
+                    <div class="status-icon">
+                        <div class="indicator offline" id="ws-indicator"></div>
+                    </div>
+                    <div class="status-info">
+                        <h3>实时连接</h3>
+                        <span class="status-text" id="ws-status">未连接</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- GPU Status -->
+        <section class="gpu-section">
+            <h2>显卡信息</h2>
+            <div class="gpu-card">
+                <div class="gpu-info">
+                    <span class="gpu-name" id="gpu-name">检测中...</span>
+                    <span class="gpu-memory" id="gpu-memory">-- / -- GB</span>
+                </div>
+                <div class="gpu-bar">
+                    <div class="gpu-bar-fill" id="gpu-bar-fill" style="width: 0%"></div>
+                </div>
+                <div class="gpu-labels">
+                    <span>显存占用</span>
+                    <span id="gpu-percent">0%</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Engine Control Panel -->
+        <section class="engine-section">
+            <h2>引擎控制</h2>
+            <p class="engine-hint">点击启动对应引擎，两个引擎按需分别使用，不同时运行</p>
+            <div class="engine-cards">
+                <div class="engine-card" id="engine-card-asr">
+                    <div class="engine-header">
+                        <div class="indicator offline" id="engine-asr-indicator"></div>
+                        <h3>ASR 引擎</h3>
+                        <span class="engine-badge" id="engine-asr-badge">离线</span>
+                    </div>
+                    <p class="engine-model" id="engine-asr-model">加载中...</p>
+                    <p class="engine-desc">语音识别转文字</p>
+                    <p class="engine-memory" id="engine-asr-memory"></p>
+                    <div class="engine-progress hidden" id="engine-asr-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="engine-asr-progress-fill"></div>
+                        </div>
+                        <span class="progress-text" id="engine-asr-progress-text">准备启动...</span>
+                    </div>
+                    <div class="engine-actions">
+                        <button class="btn btn-start" id="btn-start-asr">
+                            <span class="btn-text">启动服务</span>
+                        </button>
+                        <button class="btn btn-stop hidden" id="btn-stop-asr">
+                            <span class="btn-text">停止服务</span>
+                        </button>
+                    </div>
+                </div>
+                <div class="engine-card" id="engine-card-llm">
+                    <div class="engine-header">
+                        <div class="indicator offline" id="engine-llm-indicator"></div>
+                        <h3>LLM 引擎</h3>
+                        <span class="engine-badge" id="engine-llm-badge">离线</span>
+                    </div>
+                    <p class="engine-model" id="engine-llm-model">加载中...</p>
+                    <p class="engine-desc">智能问答生成</p>
+                    <p class="engine-memory" id="engine-llm-memory"></p>
+                    <div class="engine-progress hidden" id="engine-llm-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="engine-llm-progress-fill"></div>
+                        </div>
+                        <span class="progress-text" id="engine-llm-progress-text">准备启动...</span>
+                    </div>
+                    <div class="engine-actions">
+                        <button class="btn btn-start" id="btn-start-llm">
+                            <span class="btn-text">启动服务</span>
+                        </button>
+                        <button class="btn btn-stop hidden" id="btn-stop-llm">
+                            <span class="btn-text">停止服务</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Mode Selection -->
+        <section class="mode-section">
+            <h2>工作模式</h2>
+            <div class="mode-controls">
+                <button class="btn btn-mode active" id="btn-mode-transcribe" data-mode="transcribe">
+                    <span class="btn-text">语音识别</span>
+                </button>
+                <button class="btn btn-mode" id="btn-mode-analysis" data-mode="analysis">
+                    <span class="btn-text">内容分析</span>
+                </button>
+            </div>
+            <p class="mode-desc" id="mode-desc">将语音转换为文字</p>
+        </section>
+
+        <!-- Recording Section (only for transcribe mode) -->
+        <section class="recording-section" id="recording-section">
+            <h2>实时录音</h2>
+            <div class="record-controls">
+                <button class="btn btn-record" id="btn-start">
+                    <span class="btn-icon">[MIC]</span>
+                    <span class="btn-text">开始录音</span>
+                </button>
+                <button class="btn btn-stop" id="btn-stop" disabled>
+                    <span class="btn-icon">[STOP]</span>
+                    <span class="btn-text">停止录音</span>
+                </button>
+                <button class="btn btn-secondary" id="btn-clear">
+                    <span class="btn-icon">[CLR]</span>
+                    <span class="btn-text">清空</span>
+                </button>
+            </div>
+            <div class="record-status">
+                <div class="recording-indicator" id="recording-indicator"></div>
+                <span id="record-status-text">准备就绪</span>
+            </div>
+        </section>
+
+        <!-- Real-time Result (Transcribe Mode) -->
+        <section class="result-section" id="section-transcribe">
+            <h2>实时识别结果</h2>
+            <div class="result-box">
+                <div class="result-content" id="realtime-result">
+                    <span class="placeholder">点击"开始录音"开始识别...</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- Analysis Section (Analysis Mode) -->
+        <section class="result-section analysis-section hidden" id="section-analysis">
+            <h2>内容分析与提炼</h2>
+            <div class="analysis-box">
+                <div class="analysis-input">
+                    <h4>待分析内容</h4>
+                    <textarea id="analysis-source" placeholder="请输入或粘贴需要分析的文字内容..."></textarea>
+                </div>
+                <div class="analysis-actions">
+                    <button class="btn btn-record" id="btn-analyze">
+                        <span class="btn-text">开始分析</span>
+                    </button>
+                </div>
+                <div class="analysis-result" id="analysis-result">
+                    <h4>分析结果</h4>
+                    <div class="result-content" id="analysis-output">
+                        <span class="placeholder">分析结果将显示在这里...</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Document Records Section -->
+        <section class="document-records-section" id="document-records-section">
+            <h2>智能文档</h2>
+            <p class="section-desc">从转写文本自动生成标准文档记录</p>
+            <div class="document-records-controls">
+                <button class="btn btn-secondary" id="btn-refresh-records">
+                    <span class="btn-text">刷新列表</span>
+                </button>
+            </div>
+            <div class="document-records-list" id="document-records-list">
+                <div class="placeholder">暂无文档记录</div>
+            </div>
+        </section>
+
+        <!-- Record Detail Modal -->
+        <div class="modal hidden" id="record-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modal-record-title">文档详情</h3>
+                    <button class="btn-close" id="btn-close-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="record-status-bar">
+                        <span class="record-status" id="modal-record-status">草稿</span>
+                        <span class="record-date" id="modal-record-date">--</span>
+                    </div>
+                    <div class="record-source">
+                        <h4>原始转写文本</h4>
+                        <div class="source-text" id="modal-source-text"></div>
+                    </div>
+                    <div class="record-actions-bar">
+                        <button class="btn btn-record" id="btn-extract-info">
+                            <span class="btn-text">提取信息</span>
+                        </button>
+                        <button class="btn btn-record" id="btn-generate-record">
+                            <span class="btn-text">生成文档</span>
+                        </button>
+                        <button class="btn btn-secondary" id="btn-save-record">
+                            <span class="btn-text">保存修改</span>
+                        </button>
+                    </div>
+                    <div class="record-result">
+                        <h4>文档内容</h4>
+                        <textarea id="modal-record-content" placeholder="点击"提取信息"和"生成文档"生成内容..."></textarea>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Create Record Modal -->
+        <div class="modal hidden" id="create-record-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>创建新文档</h3>
+                    <button class="btn-close" id="btn-close-create-modal">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <div class="form-group">
+                        <label>选择转写记录：</label>
+                        <select id="create-record-transcription" class="form-select">
+                            <option value="">请选择...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>文档标题：</label>
+                        <input type="text" id="create-record-title" class="form-input" placeholder="请输入文档标题...">
+                    </div>
+                    <div class="form-actions">
+                        <button class="btn btn-record" id="btn-create-record-confirm">
+                            <span class="btn-text">创建</span>
+                        </button>
+                        <button class="btn btn-secondary" id="btn-create-record-cancel">
+                            <span class="btn-text">取消</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- History Section -->
+        <section class="history-section">
+            <h2>历史记录</h2>
+            <div class="history-list" id="history-list">
+                <div class="placeholder">暂无记录</div>
+            </div>
+        </section>
+
+        <!-- API Test Section -->
+        <section class="api-section">
+            <h2>API 测试</h2>
+            <div class="api-controls">
+                <button class="btn btn-secondary" id="btn-test-health">
+                    <span class="btn-text">测试健康检查</span>
+                </button>
+                <button class="btn btn-secondary" id="btn-load-history">
+                    <span class="btn-text">加载历史记录</span>
+                </button>
+            </div>
+            <div class="api-result" id="api-result"></div>
+        </section>
+    </div>
+
+            <script src="/static/js/app.js?v=15"></script>
+</body>
+</html>

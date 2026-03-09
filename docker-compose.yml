@@ -1,0 +1,45 @@
+services:
+  # Backend - FastAPI with WebUI and Engine Manager
+  # ASR and LLM engines are managed dynamically via backend API
+  backend:
+    image: intelligent-record-backend:latest
+    container_name: intelligent-record-backend
+    ports:
+      - "8080:8080"
+    volumes:
+      # Code is now baked into image (fix Windows volume mount issue)
+      # - ./backend:/app
+      - ./models:/models:ro
+      - //var/run/docker.sock:/var/run/docker.sock
+      - app_data:/app/data
+    # Add GPU support for backend to detect GPU
+    environment:
+      - ASR_API_URL=http://host.docker.internal:8001
+      - ASR_MODEL_NAME=qwen3-asr
+      - LLM_API_URL=http://host.docker.internal:8002
+      - LLM_MODEL_NAME=qwen3-1.7b
+      - LLM_MAX_MODEL_LEN=2048
+      - DATABASE_PATH=/app/data/intelligent_record.db
+      - NVIDIA_VISIBLE_DEVICES=all
+      - MSYS_NO_PATHCONV=1
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    # Add GPU support for backend to detect GPU
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+volumes:
+  data:
+    driver: local
+  app_data:
+    driver: local
+
+networks:
+  default:
+    name: intelligent-record-network
