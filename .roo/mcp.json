@@ -10,7 +10,8 @@
 			"alwaysAllow": [
 				"read_text_file",
 				"read_multiple_files",
-				"search_files"
+				"search_files",
+				"edit_file"
 			]
 		}
 	}

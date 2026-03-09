@@ -1220,15 +1220,15 @@ def _run_llm_container(self, engine: EngineStatus, memory_util: float):
 3. 测试LLM基本功能
 
 ### Phase 2: 后端开发
-1. 扩展数据库表结构（添加police_records等表）
+1. 扩展数据库表结构（添加document_records等表）
 2. 实现分段处理算法服务
-3. 实现笔录生成API
-4. 添加信息提取和笔录生成功能
+3. 实现文档生成API
+4. 添加信息提取和文档生成功能
 
 ### Phase 3: 前端开发
 1. 重新设计页面结构（三个标签页）
-2. 实现笔录工作台界面
-3. 实现笔录编辑和导出功能
+2. 实现文档工作台界面
+3. 实现文档编辑和导出功能
 
 ### Phase 4: 集成测试
 1. 端到端测试完整流程
