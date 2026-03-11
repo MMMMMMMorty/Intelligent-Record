@@ -3,6 +3,9 @@
 
 FROM vllm/vllm-openai:v0.14.0
 
+# Use Tsinghua PyPI mirror for faster download in China
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
+
 # Install qwen-asr with vLLM support
 RUN pip install --no-cache-dir "qwen-asr[vllm]==0.0.6"
 

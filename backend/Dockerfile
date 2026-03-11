@@ -1,8 +1,9 @@
 # Intelligengt Record - Backend Dockerfile
 FROM python:3.12-slim
 
-# Use USTC mirrors for apt (commented out due to network issues)
-# RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources
+# Use USTC mirrors for apt (China mainland users)
+RUN sed -i 's/deb.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources || true
+RUN sed -i 's/security.debian.org/mirrors.ustc.edu.cn/g' /etc/apt/sources.list.d/debian.sources || true
 
 # Install basic system dependencies (Docker CLI not needed - uses host Docker via socket)
 RUN apt-get update && apt-get install -y \
@@ -17,6 +18,9 @@ WORKDIR /app
 
 # Copy requirements
 COPY requirements.txt .
+
+# Use Tsinghua PyPI mirror for faster download in China
+RUN pip config set global.index-url https://pypi.tuna.tsinghua.edu.cn/simple
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
